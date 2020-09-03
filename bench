@@ -1,0 +1,24 @@
+quality=("-b:v 1.418M" "-b:v 4.255M" "-crf 30 -b:v 0")
+encoder=("libx265" "libvpx-vp9" "libaom-av1 -cpu-used 8 -row-mt 1 -strict experimental" "libaom-av1 -cpu-used 1 -row-mt 1 -strict experimental")
+time=("-ss 00:06:08 -to 00:06:13" "-ss 00:16:40 -to 00:17:00" "-ss 00:08:02 -to 00:08:09")
+
+mkdir temp
+
+for qal in $(seq 0 $((${#quality[@]}-1)))
+do
+	echo  passe sur la quality $quality[$qal]
+
+	for enc in $(seq 0 $((${#encoder[@]}-1)))
+	do
+		echo  passe sur l\'encoder $encoder[$enc]
+
+		for t in $(seq 0 $((${#time[@]}-1)))
+		do
+			echo partie $t
+			ffmpeg -i "../Beastars S01E04 .mkv" ${time[$t]} -c:v ${encoder[$enc]} ${quality[$qal]} -pass 1 -an -f null /dev/null
+			ffmpeg -i "../Beastars S01E04 .mkv" ${time[$t]} -c:v ${encoder[$enc]} ${quality[$qal]} -pass 2 -an "temp/ffmpeg-part-$t.mkv"
+		done
+		for f in temp/.; do echo "file '$f'" >> temp/liste.txt; done	
+		ffmpeg -f concat -safe 0 -i temp/liste.txt -c copy "bitrate $quality[$qal] encoder $encoder[$enc].mkv" && rm temp/*
+	done
+done
